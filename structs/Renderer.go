@@ -2,6 +2,7 @@ package structs
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/nsf/termbox-go"
 	"interactive/helper"
 )
@@ -102,18 +103,21 @@ func (r *renderer) Render() {
 	height := r.GetUsableHeight()
 	_, totalHeight := termbox.Size()
 
+	yellow := color.New(color.FgYellow).SprintFunc()
+	green := color.New(color.FgGreen).SprintFunc()
+
 	for i := 0; i < height; i++ {
 		var selectionCharacter string
 		var checkedCharacter string
 
-			selectionCharacter = "◉"
 		if r.IsSelected(r.Options[i+r.LineOffset].Value) {
+			selectionCharacter = green("◉")
 		} else {
 			selectionCharacter = "◯"
 		}
 
 		if i == r.LineIndex {
-			checkedCharacter = "❯"
+			checkedCharacter = yellow("❯")
 		} else {
 			checkedCharacter = " "
 		}
