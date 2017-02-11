@@ -127,12 +127,22 @@ func (r *renderer) Render() {
 	bottomHintColor := color.New(color.Faint).SprintFunc()
 
 	fmt.Println()
-	fmt.Println(
-		selectionColor("?"),
-		questionColor(r.Question),
-		topHintColor("(Press"),
-		keyColor("<space>"),
-		topHintColor("to select)"))
+
+	if len(r.Selection) > 0 {
+		fmt.Println(
+			selectionColor("?"),
+			questionColor(r.Question),
+			topHintColor("(Press"),
+			keyColor("<enter>"),
+			topHintColor("to confirm)"))
+	} else {
+		fmt.Println(
+			selectionColor("?"),
+			questionColor(r.Question),
+			topHintColor("(Press"),
+			keyColor("<space>"),
+			topHintColor("to select)"))
+	}
 
 	for i := 0; i < height; i++ {
 		var selectionCharacter string
