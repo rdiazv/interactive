@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"interactive/selection"
+	"github.com/rdiazv/interactive/selection"
 )
 
 func main() {
@@ -15,7 +15,10 @@ func main() {
 		})
 	}
 
-	values, canceled := selection.Ask("Choose which tenants to install.", options)
+	values, canceled := selection.Ask(&selection.Question{
+		Message: "Choose some options.",
+		Choices: options,
+	})
 
 	if canceled {
 		fmt.Println("Canceled!")

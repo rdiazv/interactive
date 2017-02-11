@@ -8,21 +8,23 @@ import (
 )
 
 type renderer struct {
-	Question   string
+	Message   string
 	Options    []*Option
 	Selection  []interface{}
 	LineIndex  int
 	LineOffset int
 }
 
-func NewRenderer(question string, options []*Option) *renderer {
-	return &renderer{
+func Ask(question *Question) ([]interface{}, bool){
+	r := &renderer{
 		LineIndex:  0,
 		LineOffset: 0,
 		Selection:  make([]interface{}, 0),
-		Options:    options,
-		Question:   question,
+		Options:   question.Choices,
+		Message:   question.Message,
 	}
+
+	return r.Init()
 }
 
 func (r *renderer) Init() ([]interface{}, bool) {
@@ -131,14 +133,14 @@ func (r *renderer) Render() {
 	if len(r.Selection) > 0 {
 		fmt.Println(
 			selectionColor("?"),
-			questionColor(r.Question),
+			questionColor(r.Message),
 			topHintColor("(Press"),
 			keyColor("<enter>"),
 			topHintColor("to confirm)"))
 	} else {
 		fmt.Println(
 			selectionColor("?"),
-			questionColor(r.Question),
+			questionColor(r.Message),
 			topHintColor("(Press"),
 			keyColor("<space>"),
 			topHintColor("to select)"))
