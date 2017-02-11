@@ -1,4 +1,4 @@
-package structs
+package selection
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ func NewRenderer(question string, options []*Option) *renderer {
 	}
 }
 
-func (r *renderer) Init() {
+func (r *renderer) Init() ([]interface{}, bool) {
 	err := termbox.Init()
 
 	if err != nil {
@@ -37,12 +37,18 @@ func (r *renderer) Init() {
 
 	r.Render()
 
+	canceled := false
+
 mainloop:
 	for {
 		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
 			switch ev.Key {
 			case termbox.KeyEsc, termbox.KeyCtrlC:
+				canceled = true
+				break mainloop
+
+			case termbox.KeyEnter:
 				break mainloop
 
 			case termbox.KeySpace:
@@ -60,6 +66,12 @@ mainloop:
 
 		r.Render()
 	}
+
+	if canceled {
+		return nil, true
+	}
+
+	return r.Selection, false
 }
 
 func (r *renderer) IsSelected(value interface{}) bool {

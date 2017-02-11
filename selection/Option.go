@@ -1,4 +1,4 @@
-package structs
+package selection
 
 type Option struct {
 	Text  string
