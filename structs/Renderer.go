@@ -3,22 +3,25 @@ package structs
 import (
 	"fmt"
 	"github.com/nsf/termbox-go"
+	"interactive/helper"
 )
 
 type renderer struct {
-	Options   []*Option
-	Selection []interface{}
-	LineIndex int
+	Options    []*Option
+	Selection  []interface{}
+	LineIndex  int
+	LineOffset int
 }
 
 func NewRenderer() *renderer {
 	return &renderer{
-		LineIndex: 0,
-		Selection: make([]interface{}, 0),
+		LineIndex:  0,
+		LineOffset: 0,
+		Selection:  make([]interface{}, 0),
 	}
 }
 
-func (r renderer) Init() {
+func (r *renderer) Init() {
 	err := termbox.Init()
 
 	if err != nil {
@@ -39,21 +42,13 @@ mainloop:
 				break mainloop
 
 			case termbox.KeySpace:
-				value := r.Options[r.LineIndex].Value
-
-				if inArray(r.Selection, value) {
-					r.Selection = removeValue(r.Selection, value)
-				} else {
-					r.Selection = append(r.Selection, value)
-				}
+				r.ToggleSelection(r.Options[r.LineIndex].Value)
 
 			case termbox.KeyArrowUp:
-				if r.LineIndex > 0 {
-					r.LineIndex -= 1
-				}
+				r.Move(-1)
 
 			case termbox.KeyArrowDown:
-				r.LineIndex += 1
+				r.Move(1)
 			}
 		case termbox.EventError:
 			panic(ev.Err)
@@ -63,17 +58,33 @@ mainloop:
 	}
 }
 
-func (r renderer) Render() {
+func (r *renderer) IsSelected(value interface{}) bool {
+	return helper.InArray(r.Selection, value)
+}
+
+func (r *renderer) ToggleSelection(value interface{}) {
+	if r.IsSelected(value) {
+		r.Selection = helper.RemoveFromArray(r.Selection, value)
+	} else {
+		r.Selection = append(r.Selection, value)
+	}
+}
+
+func (r *renderer) Move(lines int) {
+	r.LineIndex += lines
+}
+
+func (r *renderer) Render() {
 	const coldef = termbox.ColorDefault
 	termbox.Clear(coldef, coldef)
 
 	_, height := termbox.Size()
 
-	for i := 0; i < min(height, len(r.Options))-1; i++ {
+	for i := 0; i < helper.Min(height, len(r.Options))-1; i++ {
 		var selectionCharacter string
 		var checkedCharacter string
 
-		if inArray(r.Selection, r.Options[i].Value) {
+		if r.IsSelected(r.Options[i].Value) {
 			selectionCharacter = "◉"
 		} else {
 			selectionCharacter = "◯"
@@ -89,31 +100,4 @@ func (r renderer) Render() {
 	}
 
 	termbox.Flush()
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-
-	return b
-}
-
-func inArray(array []interface{}, value interface{}) bool {
-	for _, item := range array {
-		if item == value {
-			return true
-		}
-	}
-	return false
-}
-
-func removeValue(array []interface{}, value interface{}) []interface{} {
-	for i, item := range array {
-		if item == value {
-			return append(array[:i], array[i+1:]...)
-		}
-	}
-
-	return array
 }
