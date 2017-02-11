@@ -42,7 +42,7 @@ mainloop:
 				break mainloop
 
 			case termbox.KeySpace:
-				r.ToggleSelection(r.Options[r.LineIndex].Value)
+				r.ToggleSelection(r.Options[r.LineIndex + r.LineOffset].Value)
 
 			case termbox.KeyArrowUp:
 				r.Move(-1)
@@ -71,7 +71,24 @@ func (r *renderer) ToggleSelection(value interface{}) {
 }
 
 func (r *renderer) Move(lines int) {
-	r.LineIndex += lines
+	_, height := termbox.Size()
+	middle := height / 2
+	movingDown := lines > 0
+	movingUp := lines < 0
+
+	if r.LineIndex == middle {
+		if movingUp && r.LineOffset > 0 {
+			r.LineOffset += lines
+		} else if movingDown && len(r.Options) - r.LineOffset > height - 1 {
+			r.LineOffset += lines
+		} else {
+			r.LineIndex += lines
+		}
+	} else if movingUp && r.LineIndex > 0 {
+		r.LineIndex += lines
+	} else if movingDown && r.LineIndex + r.LineOffset + 1 < len(r.Options) {
+		r.LineIndex += lines
+	}
 }
 
 func (r *renderer) Render() {
@@ -84,7 +101,7 @@ func (r *renderer) Render() {
 		var selectionCharacter string
 		var checkedCharacter string
 
-		if r.IsSelected(r.Options[i].Value) {
+		if r.IsSelected(r.Options[i + r.LineOffset].Value) {
 			selectionCharacter = "◉"
 		} else {
 			selectionCharacter = "◯"
@@ -96,7 +113,7 @@ func (r *renderer) Render() {
 			checkedCharacter = " "
 		}
 
-		fmt.Println(checkedCharacter, selectionCharacter, r.Options[i].Text)
+		fmt.Println(checkedCharacter, selectionCharacter, r.Options[i + r.LineOffset].Text)
 	}
 
 	termbox.Flush()
