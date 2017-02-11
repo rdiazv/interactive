@@ -42,7 +42,7 @@ mainloop:
 				break mainloop
 
 			case termbox.KeySpace:
-				r.ToggleSelection(r.Options[r.LineIndex + r.LineOffset].Value)
+				r.ToggleSelection(r.Options[r.LineIndex+r.LineOffset].Value)
 
 			case termbox.KeyArrowUp:
 				r.Move(-1)
@@ -70,8 +70,13 @@ func (r *renderer) ToggleSelection(value interface{}) {
 	}
 }
 
-func (r *renderer) Move(lines int) {
+func (r *renderer) GetUsableHeight() int {
 	_, height := termbox.Size()
+	return helper.Min(height-1, len(r.Options))
+}
+
+func (r *renderer) Move(lines int) {
+	height := r.GetUsableHeight()
 	middle := height / 2
 	movingDown := lines > 0
 	movingUp := lines < 0
@@ -79,14 +84,14 @@ func (r *renderer) Move(lines int) {
 	if r.LineIndex == middle {
 		if movingUp && r.LineOffset > 0 {
 			r.LineOffset += lines
-		} else if movingDown && len(r.Options) - r.LineOffset > height - 1 {
+		} else if movingDown && len(r.Options)-r.LineOffset > height {
 			r.LineOffset += lines
 		} else {
 			r.LineIndex += lines
 		}
 	} else if movingUp && r.LineIndex > 0 {
 		r.LineIndex += lines
-	} else if movingDown && r.LineIndex + r.LineOffset + 1 < len(r.Options) {
+	} else if movingDown && r.LineIndex+r.LineOffset+1 < len(r.Options) {
 		r.LineIndex += lines
 	}
 }
@@ -94,15 +99,15 @@ func (r *renderer) Move(lines int) {
 func (r *renderer) Render() {
 	const coldef = termbox.ColorDefault
 	termbox.Clear(coldef, coldef)
+	height := r.GetUsableHeight()
+	_, totalHeight := termbox.Size()
 
-	_, height := termbox.Size()
-
-	for i := 0; i < helper.Min(height, len(r.Options))-1; i++ {
+	for i := 0; i < height; i++ {
 		var selectionCharacter string
 		var checkedCharacter string
 
-		if r.IsSelected(r.Options[i + r.LineOffset].Value) {
 			selectionCharacter = "◉"
+		if r.IsSelected(r.Options[i+r.LineOffset].Value) {
 		} else {
 			selectionCharacter = "◯"
 		}
@@ -113,7 +118,11 @@ func (r *renderer) Render() {
 			checkedCharacter = " "
 		}
 
-		fmt.Println(checkedCharacter, selectionCharacter, r.Options[i + r.LineOffset].Text)
+		fmt.Println(checkedCharacter, selectionCharacter, r.Options[i+r.LineOffset].Text)
+	}
+
+	for i := 0; i < totalHeight-height-1; i++ {
+		fmt.Println()
 	}
 
 	termbox.Flush()
