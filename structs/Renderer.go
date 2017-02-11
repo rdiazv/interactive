@@ -8,17 +8,20 @@ import (
 )
 
 type renderer struct {
+	Question   string
 	Options    []*Option
 	Selection  []interface{}
 	LineIndex  int
 	LineOffset int
 }
 
-func NewRenderer() *renderer {
+func NewRenderer(question string, options []*Option) *renderer {
 	return &renderer{
 		LineIndex:  0,
 		LineOffset: 0,
 		Selection:  make([]interface{}, 0),
+		Options:    options,
+		Question:   question,
 	}
 }
 
@@ -73,7 +76,7 @@ func (r *renderer) ToggleSelection(value interface{}) {
 
 func (r *renderer) GetUsableHeight() int {
 	_, height := termbox.Size()
-	return helper.Min(height-1, len(r.Options))
+	return helper.Min(height-2, len(r.Options))
 }
 
 func (r *renderer) Move(lines int) {
@@ -103,31 +106,46 @@ func (r *renderer) Render() {
 	height := r.GetUsableHeight()
 	_, totalHeight := termbox.Size()
 
-	yellow := color.New(color.FgYellow).SprintFunc()
-	green := color.New(color.FgGreen).SprintFunc()
+	caretColor := color.New(color.FgHiGreen).SprintFunc()
+	keyColor := color.New(color.FgHiGreen, color.Bold).SprintFunc()
+	selectionColor := color.New(color.FgGreen).SprintFunc()
+	questionColor := color.New(color.FgHiWhite, color.Bold).SprintFunc()
+	optionColor := color.New(color.FgYellow).SprintFunc()
+	topHintColor := color.New(color.Reset).SprintFunc()
+	bottomHintColor := color.New(color.Faint).SprintFunc()
+
+	fmt.Println()
+	fmt.Println(
+		selectionColor("?"),
+		questionColor(r.Question),
+		topHintColor("(Press"),
+		keyColor("<space>"),
+		topHintColor("to select)"))
 
 	for i := 0; i < height; i++ {
 		var selectionCharacter string
 		var checkedCharacter string
 
 		if r.IsSelected(r.Options[i+r.LineOffset].Value) {
-			selectionCharacter = green("◉")
+			selectionCharacter = selectionColor("◉")
 		} else {
 			selectionCharacter = "◯"
 		}
 
 		if i == r.LineIndex {
-			checkedCharacter = yellow("❯")
+			checkedCharacter = caretColor("❯")
 		} else {
 			checkedCharacter = " "
 		}
 
-		fmt.Println(checkedCharacter, selectionCharacter, r.Options[i+r.LineOffset].Text)
+		fmt.Println(checkedCharacter, selectionCharacter, optionColor(r.Options[i+r.LineOffset].Text))
 	}
 
-	for i := 0; i < totalHeight-height-1; i++ {
+	for i := 0; i < totalHeight-height-2; i++ {
 		fmt.Println()
 	}
+
+	fmt.Print(bottomHintColor("(Move up and down to reveal more choices)"))
 
 	termbox.Flush()
 }

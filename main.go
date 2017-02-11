@@ -16,5 +16,5 @@ func main() {
 		})
 	}
 
-	prompt.Selection(options)
+	prompt.Selection("Choose which tenants to install.", options)
 }

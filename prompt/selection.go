@@ -4,8 +4,7 @@ import (
 	"interactive/structs"
 )
 
-func Selection(options []*structs.Option) {
-	r := structs.NewRenderer()
-	r.Options = options
+func Selection(question string, options []*structs.Option) {
+	r := structs.NewRenderer(question, options)
 	r.Init()
 }
