@@ -6,6 +6,7 @@ import (
 	"github.com/nsf/termbox-go"
 	"interactive/helper"
 	"reflect"
+	"strings"
 )
 
 type renderer struct {
@@ -89,7 +90,12 @@ func (r *renderer) ToggleSelection(value interface{}) {
 
 func (r *renderer) GetUsableHeight() int {
 	_, height := termbox.Size()
-	return helper.Min(height-2, len(r.Question.Choices))
+
+	if len(r.Question.Choices) <= height-1 {
+		return len(r.Question.Choices)
+	} else {
+		return height - 2
+	}
 }
 
 func (r *renderer) GetMessage() string {
@@ -131,6 +137,10 @@ func (r *renderer) Move(lines int) {
 	}
 }
 
+func (r *renderer) Println(str ...string) {
+	fmt.Print("\n", strings.Join(str, " "))
+}
+
 func (r *renderer) Render() {
 	const coldef = termbox.ColorDefault
 	termbox.Clear(coldef, coldef)
@@ -145,17 +155,15 @@ func (r *renderer) Render() {
 	topHintColor := color.New(color.Reset).SprintFunc()
 	bottomHintColor := color.New(color.Faint).SprintFunc()
 
-	fmt.Println()
-
 	if len(r.Selection) > 0 {
-		fmt.Println(
+		r.Println(
 			selectionColor("?"),
 			questionColor(r.GetMessage()),
 			topHintColor("(Press"),
 			keyColor("<enter>"),
 			topHintColor("to confirm)"))
 	} else {
-		fmt.Println(
+		r.Println(
 			selectionColor("?"),
 			questionColor(r.GetMessage()),
 			topHintColor("(Press"),
@@ -179,14 +187,22 @@ func (r *renderer) Render() {
 			checkedCharacter = " "
 		}
 
-		fmt.Println(checkedCharacter, selectionCharacter, optionColor(r.Question.Choices[i+r.LineOffset].Text))
+		r.Println(checkedCharacter, selectionCharacter, optionColor(r.Question.Choices[i+r.LineOffset].Text))
 	}
 
-	for i := 0; i < totalHeight-height-2; i++ {
-		fmt.Println()
-	}
+	hasScroll := len(r.Question.Choices) > height
 
-	fmt.Print(bottomHintColor("(Move up and down to reveal more choices)"))
+	if hasScroll {
+		for i := 0; i < totalHeight-height-2; i++ {
+			r.Println()
+		}
+
+		r.Println(bottomHintColor("(Move up and down to reveal more choices)"))
+	} else {
+		for i := 0; i < totalHeight-height-1; i++ {
+			r.Println()
+		}
+	}
 
 	termbox.Flush()
 }
