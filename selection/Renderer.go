@@ -5,23 +5,22 @@ import (
 	"github.com/fatih/color"
 	"github.com/nsf/termbox-go"
 	"interactive/helper"
+	"reflect"
 )
 
 type renderer struct {
-	Message   string
-	Options    []*Option
+	Question   *Question
 	Selection  []interface{}
 	LineIndex  int
 	LineOffset int
 }
 
-func Ask(question *Question) ([]interface{}, bool){
+func Ask(question *Question) ([]interface{}, bool) {
 	r := &renderer{
 		LineIndex:  0,
 		LineOffset: 0,
 		Selection:  make([]interface{}, 0),
-		Options:   question.Choices,
-		Message:   question.Message,
+		Question:   question,
 	}
 
 	return r.Init()
@@ -54,7 +53,7 @@ mainloop:
 				break mainloop
 
 			case termbox.KeySpace:
-				r.ToggleSelection(r.Options[r.LineIndex+r.LineOffset].Value)
+				r.ToggleSelection(r.Question.Choices[r.LineIndex+r.LineOffset].Value)
 
 			case termbox.KeyArrowUp:
 				r.Move(-1)
@@ -90,7 +89,25 @@ func (r *renderer) ToggleSelection(value interface{}) {
 
 func (r *renderer) GetUsableHeight() int {
 	_, height := termbox.Size()
-	return helper.Min(height-2, len(r.Options))
+	return helper.Min(height-2, len(r.Question.Choices))
+}
+
+func (r *renderer) GetMessage() string {
+	typeOf := reflect.TypeOf(r.Question.Message)
+	valueOf := reflect.ValueOf(r.Question.Message)
+
+	switch typeOf.Kind() {
+	case reflect.Func:
+		in := []reflect.Value{
+			reflect.ValueOf(r.Selection),
+		}
+
+		return valueOf.Call(in)[0].String()
+	case reflect.String:
+		return valueOf.String()
+	}
+
+	return ""
 }
 
 func (r *renderer) Move(lines int) {
@@ -102,14 +119,14 @@ func (r *renderer) Move(lines int) {
 	if r.LineIndex == middle {
 		if movingUp && r.LineOffset > 0 {
 			r.LineOffset += lines
-		} else if movingDown && len(r.Options)-r.LineOffset > height {
+		} else if movingDown && len(r.Question.Choices)-r.LineOffset > height {
 			r.LineOffset += lines
 		} else {
 			r.LineIndex += lines
 		}
 	} else if movingUp && r.LineIndex > 0 {
 		r.LineIndex += lines
-	} else if movingDown && r.LineIndex+r.LineOffset+1 < len(r.Options) {
+	} else if movingDown && r.LineIndex+r.LineOffset+1 < len(r.Question.Choices) {
 		r.LineIndex += lines
 	}
 }
@@ -133,14 +150,14 @@ func (r *renderer) Render() {
 	if len(r.Selection) > 0 {
 		fmt.Println(
 			selectionColor("?"),
-			questionColor(r.Message),
+			questionColor(r.GetMessage()),
 			topHintColor("(Press"),
 			keyColor("<enter>"),
 			topHintColor("to confirm)"))
 	} else {
 		fmt.Println(
 			selectionColor("?"),
-			questionColor(r.Message),
+			questionColor(r.GetMessage()),
 			topHintColor("(Press"),
 			keyColor("<space>"),
 			topHintColor("to select)"))
@@ -150,7 +167,7 @@ func (r *renderer) Render() {
 		var selectionCharacter string
 		var checkedCharacter string
 
-		if r.IsSelected(r.Options[i+r.LineOffset].Value) {
+		if r.IsSelected(r.Question.Choices[i+r.LineOffset].Value) {
 			selectionCharacter = selectionColor("◉")
 		} else {
 			selectionCharacter = "◯"
@@ -162,7 +179,7 @@ func (r *renderer) Render() {
 			checkedCharacter = " "
 		}
 
-		fmt.Println(checkedCharacter, selectionCharacter, optionColor(r.Options[i+r.LineOffset].Text))
+		fmt.Println(checkedCharacter, selectionCharacter, optionColor(r.Question.Choices[i+r.LineOffset].Text))
 	}
 
 	for i := 0; i < totalHeight-height-2; i++ {

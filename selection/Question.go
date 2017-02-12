@@ -1,6 +1,6 @@
 package selection
 
 type Question struct {
-	Message  string
+	Message interface{}
 	Choices []*Option
 }
