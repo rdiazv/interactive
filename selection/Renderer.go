@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/nsf/termbox-go"
-	"interactive/helper"
+	"github.com/rdiazv/interactive/helper"
 	"reflect"
 	"strings"
 )
